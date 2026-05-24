@@ -1,36 +1,23 @@
 # Maven
 target/
-!.mvn/wrapper/maven-wrapper.jar
 
-# IntelliJ
+# IDE
 .idea/
 *.iml
-
-# VSCode
 .vscode/
+.classpath
+.project
+.settings/
 
-# Logs
-*.log
-logs/
-
-# Environment
-.env
-.env.*
-
-# OS Files
-.DS_Store
+# OS generated files
 Thumbs.db
+Desktop.ini
+.DS_Store
 
-# Java
-*.class
+# Environment and Logs
+*.log
+*.env
 
-# Coverage / Reports
-coverage/
-surefire-reports/
-
-# Docker
-docker-data/
-
-# Temporary
-tmp/
-temp/
+# Sensitive Property Files
+application-local.yml
+application-local.properties
