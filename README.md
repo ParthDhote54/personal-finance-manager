@@ -1,122 +1,56 @@
-# Personal Finance Manager - Backend API
+# Personal Finance Manager API
 
-![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=java&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)
+![Java](https://img.shields.io/badge/Java-21-orange.svg)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen.svg)
+![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)
 
-An enterprise-grade, production-ready backend API for a Personal Finance Management application. This system provides strict data isolation, dynamic financial aggregations, dynamic goal tracking, and robust session-based authentication.
+## Overview
+The Personal Finance Manager API is a secure, enterprise-grade backend designed for managing personal finances. It provides a robust set of features to track income and expenses, establish and monitor savings goals, and generate comprehensive financial reports.
 
-## 🏛️ Architecture Overview
+## Tech Stack
+* **Core Framework:** Java 21, Spring Boot 3.2.5
+* **Security & Persistence:** Spring Security 6, Spring Data JPA
+* **Database:** PostgreSQL (Production) / H2 Database (Development & Testing)
+* **Build & Tooling:** Maven, Lombok, Docker
 
-This project implements a **Modular Monolith Architecture** utilizing **Package-by-Feature** organization. 
+## Architecture
+The application is built using a **Modular Monolith** approach with a strict **Package-by-Feature** architecture to ensure maintainability and high cohesion. It heavily leverages the **DTO (Data Transfer Object)** pattern to prevent sensitive domain entity data leakage.
+Additionally, the project employs a **Multi-Environment configuration**, utilizing Spring Profiles to seamlessly switch between an H2 in-memory database for local development and a robust PostgreSQL database for production.
 
-### Why Modular Monolith?
-Instead of a traditional `controllers/`, `services/`, `repositories/` layer spread, the codebase is grouped by domain features (`auth`, `user`, `transaction`, `category`, `goal`, `report`). This enforces strict domain boundaries, prevents "spaghetti code", makes the codebase highly cohesive, and allows individual modules to be easily extracted into microservices in the future if required.
+## Security Implementation
+Security is a foundational pillar of this API:
+* **Authentication:** Stateful Session-Based Authentication utilizing `JSESSIONID` cookies, implemented via Spring Security 6.
+* **Password Security:** Robust password hashing using BCrypt.
+* **IDOR Prevention:** Strong authorization checks to prevent Insecure Direct Object Reference (IDOR). Users can strictly only access and mutate their own data.
+* **Error Handling:** A unified Global Exception Handling strategy that ensures no stack traces or internal implementation details are leaked to clients.
 
-## 🛠️ Tech Stack
+## Key Business Logic
+* **Financial Precision:** Uses `BigDecimal` universally for all currency values to prevent floating-point precision errors.
+* **Report Aggregation:** Supports dynamic financial summary aggregation on both a monthly and yearly basis.
+* **Goal Tracking:** Automatically calculates and tracks progress towards savings goals dynamically based on the user's real-time net savings (Income - Expenses).
 
-- **Core:** Java 17, Spring Boot 3.x
-- **Data Persistence:** Spring Data JPA, Hibernate, PostgreSQL (Production), H2 (Development)
-- **Security:** Spring Security (Session-Cookie based)
-- **Validation:** Spring Boot Starter Validation (`jakarta.validation`)
-- **DevOps:** Docker (Multi-stage build), Render (Cloud hosting)
-- **Testing:** JUnit 5, Mockito, Spring MockMvc
+## API Endpoints
 
-## 🔒 Security & Authentication
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| **POST** | `/api/auth/register` | Register a new user account |
+| **POST** | `/api/auth/login` | Authenticate and create a session |
+| **POST** | `/api/auth/logout` | Terminate the current session |
+| **GET** | `/api/categories` | Retrieve default and custom categories |
+| **POST** | `/api/categories` | Create a custom category |
+| **POST** | `/api/transactions` | Record a new income or expense transaction |
+| **GET** | `/api/transactions` | Retrieve user transactions (supports filtering) |
+| **POST** | `/api/goals` | Create a new financial savings goal |
+| **GET** | `/api/goals` | Retrieve all savings goals and progress |
+| **GET** | `/api/reports/summary?month={month}&year={year}` | Generate a monthly financial summary |
+| **GET** | `/api/reports/yearly/{year}` | Generate a yearly financial summary |
 
-The API uses **Stateful Session Authentication (`JSESSIONID`)** rather than JWTs. 
+## Dockerization
+The project includes an optimized, **multi-stage Docker build**. The process isolates the heavy Maven build environment (used for resolving dependencies and compiling the JAR) from the runtime environment. The final runtime container uses a highly lightweight Alpine JRE image, drastically minimizing the final footprint and enhancing deployment speeds and security.
 
-### Why Session Auth?
-- **Immediate Revocation:** Logging out instantly invalidates the session on the server-side, preventing token theft replays.
-- **Strict CORS & Cookies:** The system relies on `httpOnly` and `SameSite=Lax` cookies, meaning the browser automatically handles the transmission of the auth token, drastically reducing XSS vulnerability surfaces.
-- **Ownership Isolation:** Every single data access query (e.g., `findByIdAndUser`) inherently relies on the injected `USER_ID` from the active server session, making Insecure Direct Object Reference (IDOR) attacks mathematically impossible.
+## Default Categories
+To immediately provide value without requiring configuration, the system automatically seeds 8 global default categories:
+* **Income:** Salary, Freelance, Investment, Other Income
+* **Expense:** Food, Transport, Shopping, Bills
 
-## 🗄️ Database Design
-
-- **Users:** Stores credentials and profiles.
-- **Categories:** Supports both Global Default categories (shared across all users) and Custom Categories (owned by specific users).
-- **Transactions:** Associated with a Category and a User. The `TransactionType` (INCOME/EXPENSE) is inferred dynamically from the Category.
-- **Goals:** Tracks target amounts and timeframes. *Progress is never stored statically*; it is dynamically computed using JPQL aggregations on the `Transaction` table to ensure 100% data consistency.
-
----
-
-## 🚀 Running Locally
-
-### Prerequisites
-- Java 17
-- Maven
-- Docker (optional)
-
-### Method 1: Using Maven (Development Profile)
-This method utilizes the in-memory H2 database.
-```bash
-mvn clean install
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
-```
-
-### Method 2: Using Docker (Production Profile)
-This builds the multi-stage lightweight Alpine container.
-```bash
-docker build -t finance-manager-api .
-docker run -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=prod \
-  -e DB_URL=jdbc:postgresql://<host>:5432/<db> \
-  -e DB_USERNAME=<username> \
-  -e DB_PASSWORD=<password> \
-  finance-manager-api
-```
-
----
-
-## 📚 API Endpoints
-
-### 🔐 Auth Module
-- `POST /api/auth/register` - Register a new user.
-- `POST /api/auth/login` - Authenticate and receive `JSESSIONID` cookie.
-- `POST /api/auth/logout` - Invalidate active session.
-
-### 🏷️ Category Module
-- `GET /api/categories` - Fetch global defaults + user's custom categories.
-- `POST /api/categories` - Create a custom category.
-- `DELETE /api/categories/{name}` - Delete a custom category (Defaults cannot be deleted).
-
-### 💸 Transaction Module
-- `POST /api/transactions` - Log an income or expense.
-- `GET /api/transactions` - Fetch transactions (Supports `startDate`, `endDate`, `categoryId` filters).
-- `PUT /api/transactions/{id}` - Update a transaction (Note: `date` cannot be modified).
-- `DELETE /api/transactions/{id}` - Delete a transaction.
-
-### 🎯 Goal Module
-- `POST /api/goals` - Set a new savings goal.
-- `GET /api/goals` - Retrieve all goals with **dynamically calculated progress**.
-- `GET /api/goals/{id}` - Retrieve specific goal.
-- `PUT /api/goals/{id}` - Update a goal's target amount or date.
-- `DELETE /api/goals/{id}` - Remove a goal.
-
-### 📊 Report Module
-- `GET /api/reports/monthly/{year}/{month}` - Get dynamic aggregations of income/expenses for a specific month.
-- `GET /api/reports/yearly/{year}` - Get dynamic aggregations for an entire year.
-
-*(See the included Postman Collection for exact payload schemas).*
-
----
-
-## 🧪 Testing Strategy
-
-The project features a comprehensive suite of automated tests designed for headless CI/CD environments.
-- **Controller Tests (`MockMvc`):** Validates precise JSON contract mappings, status codes (200, 201, 400, 401, 403, 404, 409), and endpoint security.
-- **Service Tests (`Mockito`):** Isolates mathematical logic, such as proving the system handles negative net savings securely without crashing, and validating that cross-user data leakage is impossible.
-
-Run tests using:
-```bash
-mvn clean test
-```
-
-## ☁️ Deployment
-
-This backend is optimized for PaaS deployments like **Render** or **Heroku**.
-1. Set the Build Command: `mvn clean package -DskipTests`
-2. Set the Start Command: `java -jar target/*.jar`
-3. Inject the `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` variables linking to your managed PostgreSQL instance.
-4. The system will automatically detect the dynamic `$PORT` variable and bind successfully.
+Using specifically crafted JPQL queries, these global default categories seamlessly coexist with user-specific custom categories, ensuring users have access to both defaults and their own personalized budget classifications simultaneously.
