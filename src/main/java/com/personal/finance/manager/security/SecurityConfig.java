@@ -13,6 +13,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.boot.web.servlet.ServletContextInitializer;
+import jakarta.servlet.SessionCookieConfig;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Arrays;
@@ -38,11 +40,23 @@ public class SecurityConfig {
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                .sessionFixation(fixation -> fixation.migrateSession())
                 .maximumSessions(1)
             )
             .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
+    }
+
+    @Bean
+    public ServletContextInitializer servletContextInitializer() {
+        return servletContext -> {
+            SessionCookieConfig sessionCookieConfig = servletContext.getSessionCookieConfig();
+            sessionCookieConfig.setHttpOnly(true);
+            sessionCookieConfig.setSecure(true); // Required for SameSite=None
+            sessionCookieConfig.setAttribute("SameSite", "None");
+            sessionCookieConfig.setPath("/");
+        };
     }
 
     @Bean
