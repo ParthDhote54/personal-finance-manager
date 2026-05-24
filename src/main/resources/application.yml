@@ -1,0 +1,15 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  application:
+    name: personal-finance-manager
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    session:
+      timeout: 60m
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: false # Overridden in prod

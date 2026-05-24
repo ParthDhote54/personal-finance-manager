@@ -1,0 +1,36 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ
+.idea/
+*.iml
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Java
+*.class
+
+# Coverage / Reports
+coverage/
+surefire-reports/
+
+# Docker
+docker-data/
+
+# Temporary
+tmp/
+temp/
