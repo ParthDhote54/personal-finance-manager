@@ -4,6 +4,12 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen.svg)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)
 
+## 🚀 Live API
+This backend is live and deployed on Render! 
+**Base URL:** [https://personal-finance-api-z3nk.onrender.com](https://personal-finance-api-z3nk.onrender.com)
+
+*(Note: The service is hosted on a free tier. The first request may take up to 60 seconds as the server wakes up from sleep mode.)*
+
 ## Overview
 The Personal Finance Manager API is a secure, enterprise-grade backend designed for managing personal finances. It provides a robust set of features to track income and expenses, establish and monitor savings goals, and generate comprehensive financial reports.
 
