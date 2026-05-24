@@ -1,15 +1,29 @@
 services:
+  # 1. The PostgreSQL Database
+  - type: pserv
+    name: personal-finance-db
+    env: postgres
+    plan: free
+    ipAllowList: [] # Allow all connections
+
+  # 2. The Spring Boot Web Service
   - type: web
-    name: personal-finance-manager-api
+    name: personal-finance-api
     env: docker
     plan: free
-    dockerCommand: "java -jar app.jar"
+    branch: main
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-      - key: DB_URL
-        sync: false
-      - key: DB_USERNAME
-        sync: false
-      - key: DB_PASSWORD
-        sync: false
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: personal-finance-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: personal-finance-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: personal-finance-db
+          property: password
