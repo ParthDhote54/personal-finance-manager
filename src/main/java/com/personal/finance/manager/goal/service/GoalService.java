@@ -138,7 +138,8 @@ public class GoalService {
         }
 
         BigDecimal current = goal.getCurrentProgress() != null ? goal.getCurrentProgress() : BigDecimal.ZERO;
-        BigDecimal remainingAmount = goal.getTargetAmount().subtract(current);
+        BigDecimal target = goal.getTargetAmount() != null ? goal.getTargetAmount() : BigDecimal.ZERO;
+        BigDecimal remainingAmount = target.subtract(current);
 
         if (amount.compareTo(remainingAmount) > 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot add more funds than the remaining amount of ₹" + remainingAmount);
@@ -147,7 +148,7 @@ public class GoalService {
         BigDecimal newProgress = current.add(amount);
         goal.setCurrentProgress(newProgress);
 
-        if (newProgress.compareTo(goal.getTargetAmount()) >= 0) {
+        if (newProgress.compareTo(target) >= 0) {
             goal.setIsAchieved(true);
         }
 
@@ -160,14 +161,15 @@ public class GoalService {
             currentProgress = BigDecimal.ZERO;
         }
 
-        BigDecimal remainingAmount = goal.getTargetAmount().subtract(currentProgress);
+        BigDecimal targetAmount = goal.getTargetAmount() != null ? goal.getTargetAmount() : BigDecimal.ZERO;
+        BigDecimal remainingAmount = targetAmount.subtract(currentProgress);
         if (remainingAmount.compareTo(BigDecimal.ZERO) < 0) {
             remainingAmount = BigDecimal.ZERO;
         }
 
         double progressPercentage = 0.0;
-        if (goal.getTargetAmount().compareTo(BigDecimal.ZERO) > 0) {
-            progressPercentage = currentProgress.divide(goal.getTargetAmount(), 4, RoundingMode.HALF_UP)
+        if (targetAmount.compareTo(BigDecimal.ZERO) > 0) {
+            progressPercentage = currentProgress.divide(targetAmount, 4, RoundingMode.HALF_UP)
                     .multiply(new BigDecimal("100")).doubleValue();
         }
 
