@@ -19,6 +19,9 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.Base64;
+import java.io.IOException;
 
 /**
  * Service managing authentication and registration logic.
@@ -63,5 +66,27 @@ public class AuthService {
         
         return userRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found after successful authentication"));
+    }
+
+    @Transactional
+    public User updateProfileImage(Long userId, MultipartFile file) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        try {
+            // Validate file size (must be < 5MB to prevent database bloat)
+            if (file.getSize() > 5 * 1024 * 1024) {
+                throw new IllegalArgumentException("File size must be less than 5MB");
+            }
+            
+            // Convert to Base64 string
+            String base64Image = "data:" + file.getContentType() + ";base64," + 
+                    Base64.getEncoder().encodeToString(file.getBytes());
+            
+            user.setProfileImage(base64Image);
+            return userRepository.save(user);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to process image file", e);
+        }
     }
 }

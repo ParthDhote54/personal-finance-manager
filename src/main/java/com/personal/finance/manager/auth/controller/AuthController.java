@@ -14,10 +14,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.security.Principal;
+import com.personal.finance.manager.user.repository.UserRepository;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Controller handling user registration and login.
@@ -29,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserRepository userRepository;
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody UserRegistrationRequest request) {
@@ -60,5 +66,23 @@ public class AuthController {
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("message", "Logout successful");
         return ResponseEntity.ok(responseMap);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<User> getCurrentUser(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new com.personal.finance.manager.exception.ResourceNotFoundException("User not found"));
+        return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/profile-image")
+    public ResponseEntity<User> uploadProfileImage(@RequestParam("file") MultipartFile file, HttpSession session) {
+        Long userId = (Long) session.getAttribute("USER_ID");
+        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        User updatedUser = authService.updateProfileImage(userId, file);
+        return ResponseEntity.ok(updatedUser);
     }
 }

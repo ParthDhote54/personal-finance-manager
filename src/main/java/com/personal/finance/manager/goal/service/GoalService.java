@@ -10,6 +10,14 @@ import com.personal.finance.manager.user.entity.User;
 import com.personal.finance.manager.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.personal.finance.manager.category.entity.Category;
+import com.personal.finance.manager.category.entity.CategoryType;
+import com.personal.finance.manager.category.repository.CategoryRepository;
+import com.personal.finance.manager.transaction.entity.Transaction;
+import com.personal.finance.manager.transaction.entity.TransactionType;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import java.time.LocalDate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -24,6 +32,7 @@ public class GoalService {
     private final GoalRepository goalRepository;
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
+    private final CategoryRepository categoryRepository;
 
     @Transactional
     public GoalResponse createGoal(Long userId, GoalRequest request) {
@@ -36,6 +45,8 @@ public class GoalService {
                 .startDate(request.getStartDate())
                 .endDate(request.getTargetDate()) // mapping targetDate from DTO to endDate in Entity
                 .user(user)
+                .currentProgress(BigDecimal.ZERO)
+                .isAchieved(false)
                 .build();
 
         goal = goalRepository.save(goal);
@@ -85,12 +96,67 @@ public class GoalService {
         Goal goal = goalRepository.findByIdAndUser(goalId, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
 
+        if (goal.getCurrentProgress() != null && goal.getCurrentProgress().compareTo(BigDecimal.ZERO) > 0) {
+            Category incomeCategory = categoryRepository.findAll().stream()
+                    .filter(c -> "Goal".equalsIgnoreCase(c.getName()) && c.getType() == CategoryType.INCOME && 
+                            (c.getUser() == null || c.getUser().getId().equals(userId)))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        Category newCat = Category.builder()
+                                .name("Goal")
+                                .type(CategoryType.INCOME)
+                                .user(user)
+                                .build();
+                        return categoryRepository.save(newCat);
+                    });
+
+            Transaction refund = Transaction.builder()
+                    .amount(goal.getCurrentProgress())
+                    .type(TransactionType.INCOME)
+                    .category(incomeCategory)
+                    .description("Income from goal: " + goal.getGoalName())
+                    .date(LocalDate.now())
+                    .user(user)
+                    .build();
+
+            transactionRepository.save(refund);
+        }
+
         goalRepository.delete(goal);
     }
 
+    @Transactional
+    public GoalResponse addFunds(Long userId, Long goalId, BigDecimal amount) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Goal goal = goalRepository.findByIdAndUser(goalId, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Fund amount must be greater than zero");
+        }
+
+        BigDecimal current = goal.getCurrentProgress() != null ? goal.getCurrentProgress() : BigDecimal.ZERO;
+        BigDecimal remainingAmount = goal.getTargetAmount().subtract(current);
+
+        if (amount.compareTo(remainingAmount) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot add more funds than the remaining amount of ₹" + remainingAmount);
+        }
+
+        BigDecimal newProgress = current.add(amount);
+        goal.setCurrentProgress(newProgress);
+
+        if (newProgress.compareTo(goal.getTargetAmount()) >= 0) {
+            goal.setIsAchieved(true);
+        }
+
+        return mapToResponse(goalRepository.save(goal), user);
+    }
+
     private GoalResponse mapToResponse(Goal goal, User user) {
-        BigDecimal currentProgress = transactionRepository.sumNetTransactionsBetweenDates(user, goal.getStartDate(), goal.getEndDate());
-        if (currentProgress == null || currentProgress.compareTo(BigDecimal.ZERO) < 0) {
+        BigDecimal currentProgress = goal.getCurrentProgress();
+        if (currentProgress == null) {
             currentProgress = BigDecimal.ZERO;
         }
 
@@ -105,6 +171,8 @@ public class GoalService {
                     .multiply(new BigDecimal("100")).doubleValue();
         }
 
+        Boolean isAchieved = goal.getIsAchieved() != null ? goal.getIsAchieved() : false;
+
         return GoalResponse.builder()
                 .id(goal.getId())
                 .goalName(goal.getGoalName())
@@ -114,6 +182,7 @@ public class GoalService {
                 .currentProgress(currentProgress)
                 .progressPercentage(progressPercentage)
                 .remainingAmount(remainingAmount)
+                .isAchieved(isAchieved)
                 .build();
     }
 }

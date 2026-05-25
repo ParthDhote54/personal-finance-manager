@@ -40,10 +40,9 @@ public class CategoryServiceTest {
         defaultCategory.setName("Salary");
         defaultCategory.setUser(null); // No user = global default
 
-        when(categoryRepository.findByNameAndUserId("Salary", 1L)).thenReturn(Optional.empty());
-        when(categoryRepository.findByNameAndUserIdIsNull("Salary")).thenReturn(Optional.of(defaultCategory));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(defaultCategory));
 
-        assertThrows(AccessDeniedException.class, () -> categoryService.deleteCategory(1L, "Salary"));
+        assertThrows(AccessDeniedException.class, () -> categoryService.deleteCategory(1L, 1L));
     }
 
     @Test
@@ -56,9 +55,9 @@ public class CategoryServiceTest {
         customCategory.setName("Custom");
         customCategory.setUser(user);
 
-        when(categoryRepository.findByNameAndUserId("Custom", 1L)).thenReturn(Optional.of(customCategory));
+        when(categoryRepository.findById(2L)).thenReturn(Optional.of(customCategory));
         when(transactionRepository.existsByCategoryId(2L)).thenReturn(true);
 
-        assertThrows(CategoryInUseException.class, () -> categoryService.deleteCategory(1L, "Custom"));
+        assertThrows(CategoryInUseException.class, () -> categoryService.deleteCategory(1L, 2L));
     }
 }

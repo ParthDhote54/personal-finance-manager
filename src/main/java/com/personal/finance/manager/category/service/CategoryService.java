@@ -60,10 +60,9 @@ public class CategoryService {
     }
 
     @Transactional
-    public void deleteCategory(Long userId, String name) {
-        Category category = categoryRepository.findByNameAndUserId(name, userId)
-                .orElseGet(() -> categoryRepository.findByNameAndUserIdIsNull(name)
-                        .orElseThrow(() -> new ResourceNotFoundException("Category not found")));
+    public void deleteCategory(Long userId, Long categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
         if (category.getUser() == null) {
             throw new AccessDeniedException("Cannot delete default categories");
@@ -80,8 +79,31 @@ public class CategoryService {
         categoryRepository.delete(category);
     }
 
+    @Transactional
+    public CategoryResponse updateCategory(Long categoryId, Long userId, CategoryRequest request) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+        if (category.getUser() == null || !category.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("Cannot update another user's category or default category");
+        }
+
+        if (!category.getName().equals(request.getName())) {
+            if (categoryRepository.existsByNameAndUserId(request.getName(), userId) ||
+                categoryRepository.existsByNameAndUserIdIsNull(request.getName())) {
+                throw new DuplicateResourceException("Category name already exists");
+            }
+        }
+
+        category.setName(request.getName());
+        category.setType(request.getType());
+        
+        return mapToResponse(categoryRepository.save(category));
+    }
+
     private CategoryResponse mapToResponse(Category category) {
         return CategoryResponse.builder()
+                .id(category.getId())
                 .name(category.getName())
                 .type(category.getType())
                 .isCustom(category.getUser() != null)

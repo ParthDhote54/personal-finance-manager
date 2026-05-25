@@ -47,8 +47,8 @@ public class CategoryControllerTest {
         session.setAttribute("USER_ID", 1L);
 
         when(categoryService.getUserCategories(1L)).thenReturn(List.of(
-                new CategoryResponse("Salary", CategoryType.INCOME, false),
-                new CategoryResponse("Custom", CategoryType.EXPENSE, true)
+                new CategoryResponse(1L, "Salary", CategoryType.INCOME, false),
+                new CategoryResponse(1L, "Custom", CategoryType.EXPENSE, true)
         ));
 
         mockMvc.perform(get("/api/categories").session(session))
@@ -74,7 +74,7 @@ public class CategoryControllerTest {
         request.setType(CategoryType.INCOME);
 
         when(categoryService.createCategory(eq(1L), any(CategoryRequest.class)))
-                .thenReturn(new CategoryResponse("SideBusiness", CategoryType.INCOME, true));
+                .thenReturn(new CategoryResponse(1L, "SideBusiness", CategoryType.INCOME, true));
 
         mockMvc.perform(post("/api/categories")
                 .session(session)
@@ -109,7 +109,7 @@ public class CategoryControllerTest {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("USER_ID", 1L);
 
-        mockMvc.perform(delete("/api/categories/CustomCategory").session(session))
+        mockMvc.perform(delete("/api/categories/2").session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Category deleted successfully"));
     }
@@ -120,9 +120,9 @@ public class CategoryControllerTest {
         session.setAttribute("USER_ID", 1L);
 
         doThrow(new AccessDeniedException("Cannot delete default categories"))
-                .when(categoryService).deleteCategory(1L, "Salary");
+                .when(categoryService).deleteCategory(1L, 1L);
 
-        mockMvc.perform(delete("/api/categories/Salary").session(session))
+        mockMvc.perform(delete("/api/categories/1").session(session))
                 .andExpect(status().isForbidden());
     }
 
@@ -132,9 +132,9 @@ public class CategoryControllerTest {
         session.setAttribute("USER_ID", 1L);
 
         doThrow(new CategoryInUseException("Cannot delete category in use by transactions"))
-                .when(categoryService).deleteCategory(1L, "UsedCategory");
+                .when(categoryService).deleteCategory(1L, 2L);
 
-        mockMvc.perform(delete("/api/categories/UsedCategory").session(session))
+        mockMvc.perform(delete("/api/categories/2").session(session))
                 .andExpect(status().isConflict());
     }
 }

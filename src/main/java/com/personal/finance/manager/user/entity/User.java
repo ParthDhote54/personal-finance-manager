@@ -33,6 +33,9 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Boolean isActive = true;
 
+    @Column(name = "profile_image", columnDefinition = "TEXT")
+    private String profileImage;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Transaction> transactions = new ArrayList<>();

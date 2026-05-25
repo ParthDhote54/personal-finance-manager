@@ -21,4 +21,5 @@ public class GoalResponse {
     private BigDecimal currentProgress;
     private Double progressPercentage;
     private BigDecimal remainingAmount;
+    private Boolean isAchieved;
 }
