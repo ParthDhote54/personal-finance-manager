@@ -63,13 +63,13 @@ public class TransactionServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(transactionRepository.findByIdAndUser(99L, user)).thenReturn(Optional.of(existingTransaction));
-        when(categoryRepository.findByNameAndUserId("Food", 1L)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByIdAndUserIdOrUserIdNull(100L, 1L)).thenReturn(Optional.of(category));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> i.getArguments()[0]);
 
         TransactionRequest request = new TransactionRequest();
         request.setAmount(new BigDecimal("150.00"));
         request.setDate(LocalDate.of(2024, 2, 2)); // New date submitted
-        request.setCategory("Food");
+        request.setCategory("100");
         request.setDescription("Updated description");
 
         TransactionResponse response = transactionService.updateTransaction(1L, 99L, request);

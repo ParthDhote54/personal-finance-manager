@@ -5,7 +5,7 @@ import com.personal.finance.manager.auth.dto.LoginRequest;
 import com.personal.finance.manager.auth.dto.UserRegistrationRequest;
 import com.personal.finance.manager.auth.service.AuthService;
 import com.personal.finance.manager.exception.DuplicateResourceException;
-import com.personal.finance.manager.user.entity.User;
+import com.personal.finance.manager.auth.dto.UserResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
@@ -47,8 +47,10 @@ public class AuthControllerTest {
         request.setFullName("John Doe");
         request.setPhoneNumber("+123456789");
 
-        User mockUser = new User();
+        UserResponseDTO mockUser = new UserResponseDTO();
         mockUser.setId(1L);
+        mockUser.setUsername("test@example.com");
+        mockUser.setFullName("John Doe");
 
         when(authService.register(any(UserRegistrationRequest.class))).thenReturn(mockUser);
 
@@ -83,8 +85,10 @@ public class AuthControllerTest {
         request.setUsername("test@example.com");
         request.setPassword("Password123");
 
-        User mockUser = new User();
+        UserResponseDTO mockUser = new UserResponseDTO();
         mockUser.setId(1L);
+        mockUser.setUsername("test@example.com");
+        mockUser.setFullName("Test User");
 
         when(authService.login(any(LoginRequest.class), any(HttpServletRequest.class), any(HttpServletResponse.class))).thenReturn(mockUser);
 

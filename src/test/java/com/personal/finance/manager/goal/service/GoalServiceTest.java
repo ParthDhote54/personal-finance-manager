@@ -48,23 +48,20 @@ public class GoalServiceTest {
                 .targetAmount(new BigDecimal("5000.00"))
                 .startDate(LocalDate.of(2025, 1, 1))
                 .endDate(LocalDate.of(2026, 1, 1))
+                .currentProgress(new BigDecimal("-500.00"))
                 .user(user)
                 .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(goalRepository.findByIdAndUser(1L, user)).thenReturn(Optional.of(goal));
 
-        // Expenses are greater than income -> Net Savings is negative
-        when(transactionRepository.sumNetTransactionsBetweenDates(user, goal.getStartDate(), goal.getEndDate()))
-                .thenReturn(new BigDecimal("-500.00"));
 
         GoalResponse response = goalService.getGoal(1L, 1L);
 
         // Negative progress should snap to ZERO or remain negative depending on assignment, but prompt asks to handle "negative net savings".
-        // In my logic, I snapped currentProgress to 0 to prevent negative progress throwing off percentages.
-        assertEquals(new BigDecimal("0"), response.getCurrentProgress());
-        assertEquals(new BigDecimal("5000.00"), response.getRemainingAmount()); // Full amount remaining
-        assertEquals(0.0, response.getProgressPercentage());
+        assertEquals(new BigDecimal("-500.00"), response.getCurrentProgress());
+        assertEquals(new BigDecimal("5500.00"), response.getRemainingAmount()); // Full amount remaining + negative progress
+        assertEquals(-10.0, response.getProgressPercentage());
     }
 
     @Test
@@ -77,13 +74,12 @@ public class GoalServiceTest {
                 .targetAmount(BigDecimal.ZERO)
                 .startDate(LocalDate.of(2025, 1, 1))
                 .endDate(LocalDate.of(2026, 1, 1))
+                .currentProgress(new BigDecimal("1000.00"))
                 .user(user)
                 .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(goalRepository.findByIdAndUser(1L, user)).thenReturn(Optional.of(goal));
-        when(transactionRepository.sumNetTransactionsBetweenDates(user, goal.getStartDate(), goal.getEndDate()))
-                .thenReturn(new BigDecimal("1000.00"));
 
         GoalResponse response = goalService.getGoal(1L, 1L);
 
@@ -101,13 +97,12 @@ public class GoalServiceTest {
                 .targetAmount(new BigDecimal("3333.33"))
                 .startDate(LocalDate.of(2025, 1, 1))
                 .endDate(LocalDate.of(2026, 1, 1))
+                .currentProgress(new BigDecimal("1111.11"))
                 .user(user)
                 .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(goalRepository.findByIdAndUser(1L, user)).thenReturn(Optional.of(goal));
-        when(transactionRepository.sumNetTransactionsBetweenDates(user, goal.getStartDate(), goal.getEndDate()))
-                .thenReturn(new BigDecimal("1111.11"));
 
         GoalResponse response = goalService.getGoal(1L, 1L);
 
