@@ -2,6 +2,8 @@ package com.personal.finance.manager.auth.service;
 
 import com.personal.finance.manager.auth.dto.LoginRequest;
 import com.personal.finance.manager.auth.dto.UserRegistrationRequest;
+import com.personal.finance.manager.auth.dto.UserResponseDTO;
+import com.personal.finance.manager.auth.mapper.UserMapper;
 import com.personal.finance.manager.user.entity.User;
 import com.personal.finance.manager.exception.DuplicateResourceException;
 import com.personal.finance.manager.exception.ResourceNotFoundException;
@@ -33,9 +35,10 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final UserMapper userMapper;
 
     @Transactional
-    public User register(UserRegistrationRequest request) {
+    public UserResponseDTO register(UserRegistrationRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new DuplicateResourceException("Username already exists");
         }
@@ -48,14 +51,14 @@ public class AuthService {
                 .isActive(true)
                 .build();
 
-        return userRepository.save(user);
+        return userMapper.toDTO(userRepository.save(user));
     }
 
     /**
      * Authenticates a user and returns the verified database User entity.
      * Explictly saves the authenticated context to the HTTP Session for Spring Security 6 compatibility.
      */
-    public User login(LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
+    public UserResponseDTO login(LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
         );
@@ -64,12 +67,13 @@ public class AuthService {
         SecurityContextRepository repository = new HttpSessionSecurityContextRepository();
         repository.saveContext(SecurityContextHolder.getContext(), request, response);
         
-        return userRepository.findByUsername(loginRequest.getUsername())
+        User user = userRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found after successful authentication"));
+        return userMapper.toDTO(user);
     }
 
     @Transactional
-    public User updateProfileImage(Long userId, MultipartFile file) {
+    public UserResponseDTO updateProfileImage(Long userId, MultipartFile file) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
@@ -84,9 +88,15 @@ public class AuthService {
                     Base64.getEncoder().encodeToString(file.getBytes());
             
             user.setProfileImage(base64Image);
-            return userRepository.save(user);
+            return userMapper.toDTO(userRepository.save(user));
         } catch (IOException e) {
             throw new RuntimeException("Failed to process image file", e);
         }
+    }
+
+    public UserResponseDTO getCurrentUser(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return userMapper.toDTO(user);
     }
 }

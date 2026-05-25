@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.HashMap;
 import com.personal.finance.manager.auth.dto.LoginRequest;
 import com.personal.finance.manager.auth.dto.UserRegistrationRequest;
+import com.personal.finance.manager.auth.dto.UserResponseDTO;
 import com.personal.finance.manager.user.entity.User;
 import com.personal.finance.manager.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,7 +39,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody UserRegistrationRequest request) {
-        User user = authService.register(request);
+        UserResponseDTO user = authService.register(request);
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("message", "User registered successfully");
         responseMap.put("userId", user.getId());
@@ -50,7 +51,7 @@ public class AuthController {
                                                      HttpSession session, 
                                                      HttpServletRequest request, 
                                                      HttpServletResponse response) {
-        User user = authService.login(loginRequest, request, response);
+        UserResponseDTO user = authService.login(loginRequest, request, response);
         session.setAttribute("USER_ID", user.getId());
         
         Map<String, Object> responseMap = new HashMap<>();
@@ -69,20 +70,18 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<User> getCurrentUser(Principal principal) {
+    public ResponseEntity<UserResponseDTO> getCurrentUser(Principal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new com.personal.finance.manager.exception.ResourceNotFoundException("User not found"));
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(authService.getCurrentUser(principal.getName()));
     }
 
     @PostMapping("/profile-image")
-    public ResponseEntity<User> uploadProfileImage(@RequestParam("file") MultipartFile file, HttpSession session) {
+    public ResponseEntity<UserResponseDTO> uploadProfileImage(@RequestParam("file") MultipartFile file, HttpSession session) {
         Long userId = (Long) session.getAttribute("USER_ID");
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        User updatedUser = authService.updateProfileImage(userId, file);
+        UserResponseDTO updatedUser = authService.updateProfileImage(userId, file);
         return ResponseEntity.ok(updatedUser);
     }
 }
