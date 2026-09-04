@@ -7,16 +7,21 @@ import com.personal.finance.manager.exception.AccessDeniedException;
 import com.personal.finance.manager.exception.ResourceNotFoundException;
 import com.personal.finance.manager.transaction.dto.TransactionRequest;
 import com.personal.finance.manager.transaction.dto.TransactionResponse;
+import com.personal.finance.manager.transaction.dto.TransactionUpdateRequest;
 import com.personal.finance.manager.transaction.entity.Transaction;
 import com.personal.finance.manager.transaction.entity.TransactionType;
 import com.personal.finance.manager.transaction.repository.TransactionRepository;
 import com.personal.finance.manager.user.entity.User;
 import com.personal.finance.manager.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.criteria.Predicate;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -74,13 +79,35 @@ public class TransactionService {
     public List<TransactionResponse> getTransactions(Long userId, LocalDate startDate, LocalDate endDate, Long categoryId, TransactionType type) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        List<Transaction> transactions = transactionRepository.findFilteredTransactions(user, startDate, endDate, categoryId, type);
+
+        Specification<Transaction> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("user"), user));
+
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("date"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("date"), endDate));
+            }
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.get("category").get("id"), categoryId));
+            }
+            if (type != null) {
+                predicates.add(cb.equal(root.get("type"), type));
+            }
+
+            query.orderBy(cb.desc(root.get("date")), cb.desc(root.get("id")));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        List<Transaction> transactions = transactionRepository.findAll(spec);
         return transactions.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
     /**
      * Updates an existing transaction for the specified user. Date remains immutable.
+     * Supports partial updates.
      *
      * @param userId        ID of the authenticated user
      * @param transactionId ID of the transaction to update
@@ -88,22 +115,32 @@ public class TransactionService {
      * @return updated transaction response
      */
     @Transactional
-    public TransactionResponse updateTransaction(Long userId, Long transactionId, TransactionRequest request) {
+    public TransactionResponse updateTransaction(Long userId, Long transactionId, TransactionUpdateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Transaction transaction = transactionRepository.findByIdAndUser(transactionId, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
-        Category category = resolveCategory(request.getCategory(), user.getId());
+        if (request.getAmount() != null) {
+            if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Amount must be strictly positive");
+            }
+            transaction.setAmount(request.getAmount());
+        }
 
-        TransactionType mappedType = category.getType() == CategoryType.INCOME ? TransactionType.INCOME : TransactionType.EXPENSE;
+        if (request.getCategory() != null && !request.getCategory().trim().isEmpty()) {
+            Category category = resolveCategory(request.getCategory(), user.getId());
+            TransactionType mappedType = category.getType() == CategoryType.INCOME ? TransactionType.INCOME : TransactionType.EXPENSE;
+            transaction.setCategory(category);
+            transaction.setType(mappedType);
+        }
 
-        transaction.setAmount(request.getAmount());
-        // Do NOT allow updating date per requirements
-        transaction.setCategory(category);
-        transaction.setType(mappedType);
-        transaction.setDescription(request.getDescription());
+        if (request.getDescription() != null) {
+            transaction.setDescription(request.getDescription());
+        }
+
+        // Note: Date field is preserved (not updated) per requirement even if supplied.
 
         return mapToResponse(transactionRepository.save(transaction));
     }

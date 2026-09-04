@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.personal.finance.manager.goal.dto.GoalUpdateRequest;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -106,7 +107,7 @@ public class GoalControllerTest {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("USER_ID", 1L);
 
-        GoalRequest request = new GoalRequest();
+        GoalUpdateRequest request = new GoalUpdateRequest();
         request.setGoalName("Emergency Fund updated");
         request.setTargetAmount(new BigDecimal("6000.00"));
         request.setStartDate(LocalDate.of(2025, 1, 1));
@@ -117,7 +118,7 @@ public class GoalControllerTest {
                 .targetAmount(new BigDecimal("6000.00"))
                 .build();
 
-        when(goalService.updateGoal(eq(1L), eq(1L), any(GoalRequest.class))).thenReturn(response);
+        when(goalService.updateGoal(eq(1L), eq(1L), any(GoalUpdateRequest.class))).thenReturn(response);
 
         mockMvc.perform(put("/api/goals/1")
                 .session(session)

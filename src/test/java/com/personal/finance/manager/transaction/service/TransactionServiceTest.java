@@ -6,6 +6,7 @@ import com.personal.finance.manager.category.repository.CategoryRepository;
 import com.personal.finance.manager.exception.ResourceNotFoundException;
 import com.personal.finance.manager.transaction.dto.TransactionRequest;
 import com.personal.finance.manager.transaction.dto.TransactionResponse;
+import com.personal.finance.manager.transaction.dto.TransactionUpdateRequest;
 import com.personal.finance.manager.transaction.entity.Transaction;
 import com.personal.finance.manager.transaction.entity.TransactionType;
 import com.personal.finance.manager.transaction.repository.TransactionRepository;
@@ -128,7 +129,7 @@ public class TransactionServiceTest {
                 .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(transactionRepository.findFilteredTransactions(user, null, null, null, TransactionType.INCOME))
+        when(transactionRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class)))
                 .thenReturn(List.of(txn));
 
         List<TransactionResponse> results = transactionService.getTransactions(1L, null, null, null, TransactionType.INCOME);
@@ -160,7 +161,7 @@ public class TransactionServiceTest {
         when(categoryRepository.findByIdAndUserIdOrUserIdNull(100L, 1L)).thenReturn(Optional.of(category));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        TransactionRequest request = new TransactionRequest();
+        TransactionUpdateRequest request = new TransactionUpdateRequest();
         request.setAmount(new BigDecimal("150.00"));
         request.setDate(LocalDate.of(2024, 2, 2)); // New date submitted
         request.setCategory("100");

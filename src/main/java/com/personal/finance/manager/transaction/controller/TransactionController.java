@@ -3,6 +3,7 @@ package com.personal.finance.manager.transaction.controller;
 import com.personal.finance.manager.transaction.dto.TransactionListResponse;
 import com.personal.finance.manager.transaction.dto.TransactionRequest;
 import com.personal.finance.manager.transaction.dto.TransactionResponse;
+import com.personal.finance.manager.transaction.dto.TransactionUpdateRequest;
 import com.personal.finance.manager.transaction.entity.TransactionType;
 import com.personal.finance.manager.transaction.service.TransactionService;
 import jakarta.servlet.http.HttpSession;
@@ -81,7 +82,7 @@ public class TransactionController {
     @PutMapping("/{id}")
     public ResponseEntity<TransactionResponse> updateTransaction(
             @PathVariable Long id, 
-            @Valid @RequestBody TransactionRequest request, 
+            @Valid @RequestBody TransactionUpdateRequest request, 
             HttpSession session) {
         
         Long userId = (Long) session.getAttribute("USER_ID");

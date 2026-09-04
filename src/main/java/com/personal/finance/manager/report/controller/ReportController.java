@@ -37,6 +37,10 @@ public class ReportController {
         Long userId = (Long) session.getAttribute("USER_ID");
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
+        if (month < 1 || month > 12) {
+            throw new IllegalArgumentException("Month must be between 1 and 12");
+        }
+
         MonthlyReportResponse response = reportService.getMonthlyReport(userId, year, month);
         return ResponseEntity.ok(response);
     }

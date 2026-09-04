@@ -3,6 +3,7 @@ package com.personal.finance.manager.goal.service;
 import com.personal.finance.manager.exception.ResourceNotFoundException;
 import com.personal.finance.manager.goal.dto.GoalRequest;
 import com.personal.finance.manager.goal.dto.GoalResponse;
+import com.personal.finance.manager.goal.dto.GoalUpdateRequest;
 import com.personal.finance.manager.goal.entity.Goal;
 import com.personal.finance.manager.goal.repository.GoalRepository;
 import com.personal.finance.manager.transaction.repository.TransactionRepository;
@@ -100,16 +101,26 @@ public class GoalService {
      * @return updated goal response
      */
     @Transactional
-    public GoalResponse updateGoal(Long userId, Long goalId, GoalRequest request) {
+    public GoalResponse updateGoal(Long userId, Long goalId, GoalUpdateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Goal goal = goalRepository.findByIdAndUser(goalId, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
 
-        goal.setTargetAmount(request.getTargetAmount());
-        goal.setEndDate(request.getTargetDate());
-        
+        if (request.getGoalName() != null) {
+            goal.setGoalName(request.getGoalName());
+        }
+        if (request.getTargetAmount() != null) {
+            goal.setTargetAmount(request.getTargetAmount());
+        }
+        if (request.getStartDate() != null) {
+            goal.setStartDate(request.getStartDate());
+        }
+        if (request.getTargetDate() != null) {
+            goal.setEndDate(request.getTargetDate());
+        }
+
         return mapToResponse(goalRepository.save(goal), user);
     }
 

@@ -3,6 +3,7 @@ package com.personal.finance.manager.goal.controller;
 import com.personal.finance.manager.goal.dto.GoalListResponse;
 import com.personal.finance.manager.goal.dto.GoalRequest;
 import com.personal.finance.manager.goal.dto.GoalResponse;
+import com.personal.finance.manager.goal.dto.GoalUpdateRequest;
 import com.personal.finance.manager.goal.service.GoalService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -82,7 +83,7 @@ public class GoalController {
      * @return updated goal details
      */
     @PutMapping("/{id}")
-    public ResponseEntity<GoalResponse> updateGoal(@PathVariable Long id, @Valid @RequestBody GoalRequest request, HttpSession session) {
+    public ResponseEntity<GoalResponse> updateGoal(@PathVariable Long id, @Valid @RequestBody GoalUpdateRequest request, HttpSession session) {
         Long userId = (Long) session.getAttribute("USER_ID");
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
