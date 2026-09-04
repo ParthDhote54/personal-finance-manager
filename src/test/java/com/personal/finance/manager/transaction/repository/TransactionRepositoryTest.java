@@ -80,12 +80,22 @@ class TransactionRepositoryTest {
         entityManager.flush();
 
         // Assert: Querying with only User ID returns both
-        List<Transaction> allTxns = transactionRepository.findFilteredTransactions(user, null, null, null);
+        List<Transaction> allTxns = transactionRepository.findFilteredTransactions(user, null, null, null, null);
         assertThat(allTxns).hasSize(2);
 
         // Assert: Querying with INCOME categoryId returns only INCOME
-        List<Transaction> incomeTxns = transactionRepository.findFilteredTransactions(user, null, null, incomeCat.getId());
+        List<Transaction> incomeCategoryTxns = transactionRepository.findFilteredTransactions(user, null, null, incomeCat.getId(), null);
+        assertThat(incomeCategoryTxns).hasSize(1);
+        assertThat(incomeCategoryTxns.get(0).getCategory().getId()).isEqualTo(incomeCat.getId());
+
+        // Assert: Querying with TransactionType.INCOME returns only INCOME
+        List<Transaction> incomeTxns = transactionRepository.findFilteredTransactions(user, null, null, null, TransactionType.INCOME);
         assertThat(incomeTxns).hasSize(1);
-        assertThat(incomeTxns.get(0).getCategory().getId()).isEqualTo(incomeCat.getId());
+        assertThat(incomeTxns.get(0).getType()).isEqualTo(TransactionType.INCOME);
+
+        // Assert: Querying with TransactionType.EXPENSE returns only EXPENSE
+        List<Transaction> expenseTxns = transactionRepository.findFilteredTransactions(user, null, null, null, TransactionType.EXPENSE);
+        assertThat(expenseTxns).hasSize(1);
+        assertThat(expenseTxns.get(0).getType()).isEqualTo(TransactionType.EXPENSE);
     }
 }

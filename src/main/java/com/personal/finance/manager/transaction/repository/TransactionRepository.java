@@ -22,13 +22,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     @Query("SELECT t FROM Transaction t WHERE t.user = :user AND " +
            "(:startDate IS NULL OR t.date >= :startDate) AND " +
            "(:endDate IS NULL OR t.date <= :endDate) AND " +
-           "(:categoryId IS NULL OR t.category.id = :categoryId) " +
+           "(:categoryId IS NULL OR t.category.id = :categoryId) AND " +
+           "(:type IS NULL OR t.type = :type) " +
            "ORDER BY t.date DESC")
     List<Transaction> findFilteredTransactions(
             @Param("user") User user, 
             @Param("startDate") LocalDate startDate, 
             @Param("endDate") LocalDate endDate, 
-            @Param("categoryId") Long categoryId);
+            @Param("categoryId") Long categoryId,
+            @Param("type") com.personal.finance.manager.transaction.entity.TransactionType type);
 
     @Query("SELECT COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE -t.amount END), 0) " +
            "FROM Transaction t WHERE t.user = :user AND t.date >= :startDate AND t.date <= :endDate")
@@ -39,7 +41,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     @Query("SELECT t.category.name, t.type, SUM(t.amount) " +
            "FROM Transaction t " +
-           "WHERE t.user = :user AND EXTRACT(YEAR FROM t.date) = :year AND EXTRACT(MONTH FROM t.date) = :month " +
+           "WHERE t.user = :user AND YEAR(t.date) = :year AND MONTH(t.date) = :month " +
            "GROUP BY t.category.name, t.type")
     List<Object[]> aggregateMonthlyTransactions(
             @Param("user") User user, 
@@ -48,7 +50,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     @Query("SELECT t.category.name, t.type, SUM(t.amount) " +
            "FROM Transaction t " +
-           "WHERE t.user = :user AND EXTRACT(YEAR FROM t.date) = :year " +
+           "WHERE t.user = :user AND YEAR(t.date) = :year " +
            "GROUP BY t.category.name, t.type")
     List<Object[]> aggregateYearlyTransactions(
             @Param("user") User user, 

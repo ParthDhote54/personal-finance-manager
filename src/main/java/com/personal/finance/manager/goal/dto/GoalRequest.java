@@ -1,6 +1,7 @@
 package com.personal.finance.manager.goal.dto;
 
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -18,10 +19,10 @@ public class GoalRequest {
     @Positive(message = "Target amount must be strictly positive")
     private BigDecimal targetAmount;
 
-    @NotNull(message = "Start date is required")
     private LocalDate startDate;
 
     @NotNull(message = "Target date is required")
+    @Future(message = "Target date must be in the future")
     private LocalDate targetDate;
 
     @AssertTrue(message = "Target date must be after start date")

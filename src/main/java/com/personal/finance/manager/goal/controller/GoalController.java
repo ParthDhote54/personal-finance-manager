@@ -11,8 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/goals")
@@ -64,16 +62,5 @@ public class GoalController {
 
         goalService.deleteGoal(userId, id);
         return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping("/{id}/fund")
-    public ResponseEntity<GoalResponse> addFundsToGoal(@PathVariable Long id, 
-                                                       @RequestBody Map<String, BigDecimal> payload, 
-                                                       HttpSession session) {
-        Long userId = (Long) session.getAttribute("USER_ID");
-        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        BigDecimal amount = payload.get("amount");
-        GoalResponse updatedGoal = goalService.addFunds(userId, id, amount);
-        return ResponseEntity.ok(updatedGoal);
     }
 }

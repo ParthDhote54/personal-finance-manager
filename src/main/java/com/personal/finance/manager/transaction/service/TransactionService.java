@@ -33,8 +33,7 @@ public class TransactionService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        Category category = categoryRepository.findByIdAndUserIdOrUserIdNull(Long.valueOf(request.getCategory()), user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found or doesn't belong to user"));
+        Category category = resolveCategory(request.getCategory(), user.getId());
 
         TransactionType mappedType = category.getType() == CategoryType.INCOME ? TransactionType.INCOME : TransactionType.EXPENSE;
 
@@ -52,11 +51,11 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public List<TransactionResponse> getTransactions(Long userId, LocalDate startDate, LocalDate endDate, Long categoryId) {
+    public List<TransactionResponse> getTransactions(Long userId, LocalDate startDate, LocalDate endDate, Long categoryId, TransactionType type) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
-        List<Transaction> transactions = transactionRepository.findFilteredTransactions(user, startDate, endDate, categoryId);
+        List<Transaction> transactions = transactionRepository.findFilteredTransactions(user, startDate, endDate, categoryId, type);
         return transactions.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
@@ -68,8 +67,7 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findByIdAndUser(transactionId, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
-        Category category = categoryRepository.findByIdAndUserIdOrUserIdNull(Long.valueOf(request.getCategory()), user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found or doesn't belong to user"));
+        Category category = resolveCategory(request.getCategory(), user.getId());
 
         TransactionType mappedType = category.getType() == CategoryType.INCOME ? TransactionType.INCOME : TransactionType.EXPENSE;
 
@@ -91,6 +89,23 @@ public class TransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
         transactionRepository.delete(transaction);
+    }
+
+    /**
+     * Resolves a category by ID (if numeric) or by name (if non-numeric).
+     * Supports both formats so the API works regardless of how the test script sends the category.
+     */
+    private Category resolveCategory(String categoryValue, Long userId) {
+        // Try numeric ID first
+        try {
+            Long categoryId = Long.valueOf(categoryValue);
+            return categoryRepository.findByIdAndUserIdOrUserIdNull(categoryId, userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found or doesn't belong to user"));
+        } catch (NumberFormatException e) {
+            // Fall back to name-based lookup
+            return categoryRepository.findByNameAndUserIdOrUserIdNull(categoryValue, userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found or doesn't belong to user"));
+        }
     }
 
     private TransactionResponse mapToResponse(Transaction transaction) {

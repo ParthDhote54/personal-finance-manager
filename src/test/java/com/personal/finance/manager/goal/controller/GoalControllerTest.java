@@ -45,14 +45,14 @@ public class GoalControllerTest {
         request.setGoalName("Emergency Fund");
         request.setTargetAmount(new BigDecimal("5000.00"));
         request.setStartDate(LocalDate.of(2025, 1, 1));
-        request.setTargetDate(LocalDate.of(2026, 1, 1));
+        request.setTargetDate(LocalDate.now().plusYears(1));
 
         GoalResponse response = GoalResponse.builder()
                 .id(1L)
                 .goalName("Emergency Fund")
                 .targetAmount(new BigDecimal("5000.00"))
                 .startDate(LocalDate.of(2025, 1, 1))
-                .targetDate(LocalDate.of(2026, 1, 1))
+                .targetDate(LocalDate.now().plusYears(1))
                 .currentProgress(new BigDecimal("1000.00"))
                 .progressPercentage(20.0)
                 .remainingAmount(new BigDecimal("4000.00"))
@@ -80,7 +80,7 @@ public class GoalControllerTest {
         request.setGoalName("Bad Dates");
         request.setTargetAmount(new BigDecimal("5000.00"));
         request.setStartDate(LocalDate.of(2025, 1, 1));
-        request.setTargetDate(LocalDate.of(2024, 1, 1)); // Invalid, before start
+        request.setTargetDate(LocalDate.of(2024, 1, 1)); // Invalid, in past
 
         mockMvc.perform(post("/api/goals")
                 .session(session)
@@ -110,7 +110,7 @@ public class GoalControllerTest {
         request.setGoalName("Emergency Fund updated");
         request.setTargetAmount(new BigDecimal("6000.00"));
         request.setStartDate(LocalDate.of(2025, 1, 1));
-        request.setTargetDate(LocalDate.of(2026, 6, 1));
+        request.setTargetDate(LocalDate.now().plusYears(1));
 
         GoalResponse response = GoalResponse.builder()
                 .id(1L)

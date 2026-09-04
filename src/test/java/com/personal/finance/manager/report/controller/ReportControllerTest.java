@@ -43,7 +43,7 @@ public class ReportControllerTest {
 
         when(reportService.getMonthlyReport(1L, 2024, 1)).thenReturn(mockResponse);
 
-        mockMvc.perform(get("/api/reports/summary?year=2024&month=1").session(session))
+        mockMvc.perform(get("/api/reports/monthly/2024/1").session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.month").value(1))
                 .andExpect(jsonPath("$.year").value(2024))

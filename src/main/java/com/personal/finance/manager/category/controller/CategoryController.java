@@ -39,12 +39,12 @@ public class CategoryController {
         return ResponseEntity.ok(categories);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deleteCategory(@PathVariable Long id, HttpSession session) {
+    @DeleteMapping("/{name}")
+    public ResponseEntity<Map<String, String>> deleteCategory(@PathVariable String name, HttpSession session) {
         Long userId = (Long) session.getAttribute("USER_ID");
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        categoryService.deleteCategory(userId, id);
+        categoryService.deleteCategoryByName(userId, name);
         Map<String, String> response = new HashMap<>();
         response.put("message", "Category deleted successfully");
         return ResponseEntity.ok(response);

@@ -1,5 +1,6 @@
 package com.personal.finance.manager.category.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.personal.finance.manager.category.entity.CategoryType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,5 +15,6 @@ public class CategoryResponse {
     private Long id;
     private String name;
     private CategoryType type;
+    @JsonProperty("isCustom")
     private boolean isCustom;
 }

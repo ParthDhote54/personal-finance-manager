@@ -51,9 +51,7 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public List<CategoryResponse> getUserCategories(Long userId) {
         List<Category> defaults = categoryRepository.findByUserIdIsNull();
-        List<Category> custom = categoryRepository.findAll().stream()
-                .filter(c -> c.getUser() != null && c.getUser().getId().equals(userId))
-                .collect(Collectors.toList());
+        List<Category> custom = categoryRepository.findByUserId(userId);
 
         defaults.addAll(custom);
         return defaults.stream().map(this::mapToResponse).collect(Collectors.toList());
@@ -71,6 +69,24 @@ public class CategoryService {
         if (!category.getUser().getId().equals(userId)) {
             throw new AccessDeniedException("Cannot delete another user's category");
         }
+
+        if (transactionRepository.existsByCategoryId(category.getId())) {
+            throw new CategoryInUseException("Cannot delete category in use by transactions");
+        }
+
+        categoryRepository.delete(category);
+    }
+
+    @Transactional
+    public void deleteCategoryByName(Long userId, String categoryName) {
+        // First check if it's a default category
+        if (categoryRepository.existsByNameAndUserIdIsNull(categoryName)) {
+            throw new AccessDeniedException("Cannot delete default categories");
+        }
+
+        // Find the user's custom category by name
+        Category category = categoryRepository.findByNameAndUserId(categoryName, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
         if (transactionRepository.existsByCategoryId(category.getId())) {
             throw new CategoryInUseException("Cannot delete category in use by transactions");

@@ -19,6 +19,9 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     // Finds all default global categories
     List<Category> findByUserIdIsNull();
     
+    // Finds all custom categories for a specific user
+    List<Category> findByUserId(Long userId);
+    
     boolean existsByNameAndUserId(String name, Long userId);
     
     boolean existsByNameAndUserIdIsNull(String name);

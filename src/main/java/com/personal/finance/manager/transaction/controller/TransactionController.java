@@ -2,6 +2,7 @@ package com.personal.finance.manager.transaction.controller;
 
 import com.personal.finance.manager.transaction.dto.TransactionRequest;
 import com.personal.finance.manager.transaction.dto.TransactionResponse;
+import com.personal.finance.manager.transaction.entity.TransactionType;
 import com.personal.finance.manager.transaction.service.TransactionService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -35,12 +36,13 @@ public class TransactionController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) TransactionType type,
             HttpSession session) {
         
         Long userId = (Long) session.getAttribute("USER_ID");
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        List<TransactionResponse> response = transactionService.getTransactions(userId, startDate, endDate, categoryId);
+        List<TransactionResponse> response = transactionService.getTransactions(userId, startDate, endDate, categoryId, type);
         return ResponseEntity.ok(response);
     }
 

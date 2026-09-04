@@ -114,12 +114,12 @@ public class AuthControllerTest {
         request.setPassword("WrongPassword");
 
         when(authService.login(any(LoginRequest.class), any(HttpServletRequest.class), any(HttpServletResponse.class)))
-                .thenThrow(new RuntimeException("Bad credentials"));
+                .thenThrow(new org.springframework.security.authentication.BadCredentialsException("Bad credentials"));
 
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError()); // Or 401 if ExceptionHandler handles BadCredentials
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

@@ -104,7 +104,7 @@ public class TransactionControllerTest {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("USER_ID", 1L);
 
-        when(transactionService.getTransactions(eq(1L), any(), any(), any())).thenReturn(List.of());
+        when(transactionService.getTransactions(eq(1L), any(), any(), any(), any())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/transactions")
                 .session(session)

@@ -24,5 +24,6 @@ public class UserRegistrationRequest {
     private String fullName;
 
     @NotBlank(message = "Phone number is required")
+    @Pattern(regexp = "^\\+?[0-9]{7,15}$", message = "Phone number must be a valid contact number")
     private String phoneNumber;
 }

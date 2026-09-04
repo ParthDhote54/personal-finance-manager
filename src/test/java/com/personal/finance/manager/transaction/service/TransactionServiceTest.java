@@ -3,6 +3,7 @@ package com.personal.finance.manager.transaction.service;
 import com.personal.finance.manager.category.entity.Category;
 import com.personal.finance.manager.category.entity.CategoryType;
 import com.personal.finance.manager.category.repository.CategoryRepository;
+import com.personal.finance.manager.exception.ResourceNotFoundException;
 import com.personal.finance.manager.transaction.dto.TransactionRequest;
 import com.personal.finance.manager.transaction.dto.TransactionResponse;
 import com.personal.finance.manager.transaction.entity.Transaction;
@@ -18,9 +19,10 @@ import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -41,6 +43,98 @@ public class TransactionServiceTest {
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    public void testCreateTransactionWithCategoryName() {
+        User user = new User();
+        user.setId(1L);
+
+        Category category = new Category();
+        category.setId(10L);
+        category.setName("Food");
+        category.setType(CategoryType.EXPENSE);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(categoryRepository.findByNameAndUserIdOrUserIdNull("Food", 1L)).thenReturn(Optional.of(category));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> {
+            Transaction t = i.getArgument(0);
+            t.setId(100L);
+            return t;
+        });
+
+        TransactionRequest request = new TransactionRequest();
+        request.setAmount(new BigDecimal("50.00"));
+        request.setDate(LocalDate.now());
+        request.setCategory("Food");
+        request.setDescription("Lunch");
+
+        TransactionResponse response = transactionService.createTransaction(1L, request);
+
+        assertNotNull(response);
+        assertEquals(new BigDecimal("50.00"), response.getAmount());
+        assertEquals("Food", response.getCategory());
+        assertEquals(TransactionType.EXPENSE, response.getType());
+    }
+
+    @Test
+    public void testCreateTransactionWithNumericCategoryId() {
+        User user = new User();
+        user.setId(1L);
+
+        Category category = new Category();
+        category.setId(10L);
+        category.setName("Salary");
+        category.setType(CategoryType.INCOME);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(categoryRepository.findByIdAndUserIdOrUserIdNull(10L, 1L)).thenReturn(Optional.of(category));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> {
+            Transaction t = i.getArgument(0);
+            t.setId(101L);
+            return t;
+        });
+
+        TransactionRequest request = new TransactionRequest();
+        request.setAmount(new BigDecimal("5000.00"));
+        request.setDate(LocalDate.now());
+        request.setCategory("10");
+        request.setDescription("Monthly Salary");
+
+        TransactionResponse response = transactionService.createTransaction(1L, request);
+
+        assertNotNull(response);
+        assertEquals(new BigDecimal("5000.00"), response.getAmount());
+        assertEquals("Salary", response.getCategory());
+        assertEquals(TransactionType.INCOME, response.getType());
+    }
+
+    @Test
+    public void testGetTransactionsWithTypeFilter() {
+        User user = new User();
+        user.setId(1L);
+
+        Category category = new Category();
+        category.setName("Salary");
+        category.setType(CategoryType.INCOME);
+
+        Transaction txn = Transaction.builder()
+                .id(1L)
+                .amount(new BigDecimal("100.00"))
+                .date(LocalDate.now())
+                .type(TransactionType.INCOME)
+                .category(category)
+                .user(user)
+                .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(transactionRepository.findFilteredTransactions(user, null, null, null, TransactionType.INCOME))
+                .thenReturn(List.of(txn));
+
+        List<TransactionResponse> results = transactionService.getTransactions(1L, null, null, null, TransactionType.INCOME);
+
+        assertEquals(1, results.size());
+        assertEquals(TransactionType.INCOME, results.get(0).getType());
     }
 
     @Test
@@ -78,5 +172,23 @@ public class TransactionServiceTest {
         assertEquals(originalDate, response.getDate());
         assertEquals(new BigDecimal("150.00"), response.getAmount());
         assertEquals("Updated description", response.getDescription());
+    }
+
+    @Test
+    public void testDeleteTransaction() {
+        User user = new User();
+        user.setId(1L);
+
+        Transaction existingTransaction = Transaction.builder()
+                .id(99L)
+                .user(user)
+                .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(transactionRepository.findByIdAndUser(99L, user)).thenReturn(Optional.of(existingTransaction));
+
+        transactionService.deleteTransaction(1L, 99L);
+
+        verify(transactionRepository, times(1)).delete(existingTransaction);
     }
 }

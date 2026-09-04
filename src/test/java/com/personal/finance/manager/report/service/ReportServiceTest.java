@@ -1,6 +1,9 @@
 package com.personal.finance.manager.report.service;
 
+import com.personal.finance.manager.category.entity.CategoryType;
 import com.personal.finance.manager.report.dto.MonthlyReportResponse;
+import com.personal.finance.manager.report.dto.YearlyReportResponse;
+import com.personal.finance.manager.transaction.entity.TransactionType;
 import com.personal.finance.manager.transaction.repository.TransactionRepository;
 import com.personal.finance.manager.user.entity.User;
 import com.personal.finance.manager.user.repository.UserRepository;
@@ -11,7 +14,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +40,28 @@ public class ReportServiceTest {
     }
 
     @Test
+    public void testGetMonthlyReportWithData() {
+        User user = new User();
+        user.setId(1L);
+
+        List<Object[]> queryResults = new ArrayList<>();
+        queryResults.add(new Object[]{"Salary", TransactionType.INCOME, new BigDecimal("5000.00")});
+        queryResults.add(new Object[]{"Rent", TransactionType.EXPENSE, new BigDecimal("1200.00")});
+        queryResults.add(new Object[]{"Food", TransactionType.EXPENSE, new BigDecimal("300.00")});
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(transactionRepository.aggregateMonthlyTransactions(user, 2024, 1)).thenReturn(queryResults);
+
+        MonthlyReportResponse response = reportService.getMonthlyReport(1L, 2024, 1);
+
+        assertEquals(1, response.getTotalIncome().size());
+        assertEquals(new BigDecimal("5000.00"), response.getTotalIncome().get("Salary"));
+        assertEquals(2, response.getTotalExpenses().size());
+        assertEquals(new BigDecimal("1200.00"), response.getTotalExpenses().get("Rent"));
+        assertEquals(new BigDecimal("3500.00"), response.getNetSavings());
+    }
+
+    @Test
     public void testGetMonthlyReportWithEmptyDataset() {
         User user = new User();
         user.setId(1L);
@@ -51,19 +78,21 @@ public class ReportServiceTest {
     }
 
     @Test
-    public void testGetMonthlyReportWithAggregationNullHandling() {
-        // Even if some objects are completely absent, it shouldn't crash.
-        // It's tested indirectly by empty datasets, but if an amount is null somehow:
-        // Wait, JPQL SUM doesn't return null if the group has records, but it might.
-        // For standard exact JSON matching, empty datasets must yield empty maps.
+    public void testGetYearlyReportWithData() {
         User user = new User();
         user.setId(1L);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(transactionRepository.aggregateMonthlyTransactions(user, 2024, 1))
-                .thenReturn(Collections.emptyList());
+        List<Object[]> queryResults = new ArrayList<>();
+        queryResults.add(new Object[]{"Salary", TransactionType.INCOME, new BigDecimal("60000.00")});
+        queryResults.add(new Object[]{"Rent", TransactionType.EXPENSE, new BigDecimal("14400.00")});
 
-        MonthlyReportResponse response = reportService.getMonthlyReport(1L, 2024, 1);
-        assertEquals(BigDecimal.ZERO, response.getNetSavings());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(transactionRepository.aggregateYearlyTransactions(user, 2024)).thenReturn(queryResults);
+
+        YearlyReportResponse response = reportService.getYearlyReport(1L, 2024);
+
+        assertEquals(1, response.getTotalIncome().size());
+        assertEquals(new BigDecimal("60000.00"), response.getTotalIncome().get("Salary"));
+        assertEquals(new BigDecimal("45600.00"), response.getNetSavings());
     }
 }

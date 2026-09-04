@@ -1,5 +1,6 @@
 package com.personal.finance.manager.goal.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,5 +22,6 @@ public class GoalResponse {
     private BigDecimal currentProgress;
     private Double progressPercentage;
     private BigDecimal remainingAmount;
+    @JsonProperty("isAchieved")
     private Boolean isAchieved;
 }

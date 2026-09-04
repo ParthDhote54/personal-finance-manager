@@ -16,10 +16,10 @@ public class ReportController {
 
     private final ReportService reportService;
 
-    @GetMapping("/summary")
+    @GetMapping("/monthly/{year}/{month}")
     public ResponseEntity<MonthlyReportResponse> getMonthlyReport(
-            @RequestParam int year, 
-            @RequestParam int month, 
+            @PathVariable int year, 
+            @PathVariable int month, 
             HttpSession session) {
         
         Long userId = (Long) session.getAttribute("USER_ID");
