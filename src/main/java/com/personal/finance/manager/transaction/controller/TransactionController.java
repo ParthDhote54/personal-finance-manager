@@ -60,6 +60,7 @@ public class TransactionController {
     public ResponseEntity<TransactionListResponse> getTransactions(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String category,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) TransactionType type,
             HttpSession session) {
@@ -67,7 +68,9 @@ public class TransactionController {
         Long userId = (Long) session.getAttribute("USER_ID");
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        List<TransactionResponse> response = transactionService.getTransactions(userId, startDate, endDate, categoryId, type);
+        String categoryFilter = category != null ? category : (categoryId != null ? String.valueOf(categoryId) : null);
+
+        List<TransactionResponse> response = transactionService.getTransactions(userId, startDate, endDate, categoryFilter, type);
         return ResponseEntity.ok(new TransactionListResponse(response));
     }
 

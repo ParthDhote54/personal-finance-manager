@@ -17,4 +17,9 @@ public class CategoryResponse {
     private CategoryType type;
     @JsonProperty("isCustom")
     private boolean isCustom;
+
+    @JsonProperty("custom")
+    public boolean isCustomCategory() {
+        return isCustom;
+    }
 }

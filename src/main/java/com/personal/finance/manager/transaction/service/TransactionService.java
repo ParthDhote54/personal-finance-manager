@@ -76,7 +76,7 @@ public class TransactionService {
      * @return list of matching transactions
      */
     @Transactional(readOnly = true)
-    public List<TransactionResponse> getTransactions(Long userId, LocalDate startDate, LocalDate endDate, Long categoryId, TransactionType type) {
+    public List<TransactionResponse> getTransactions(Long userId, LocalDate startDate, LocalDate endDate, String category, TransactionType type) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -90,8 +90,16 @@ public class TransactionService {
             if (endDate != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("date"), endDate));
             }
-            if (categoryId != null) {
-                predicates.add(cb.equal(root.get("category").get("id"), categoryId));
+            if (category != null && !category.trim().isEmpty()) {
+                try {
+                    Long catId = Long.parseLong(category.trim());
+                    predicates.add(cb.or(
+                            cb.equal(root.get("category").get("id"), catId),
+                            cb.equal(cb.lower(root.get("category").get("name")), category.trim().toLowerCase())
+                    ));
+                } catch (NumberFormatException e) {
+                    predicates.add(cb.equal(cb.lower(root.get("category").get("name")), category.trim().toLowerCase()));
+                }
             }
             if (type != null) {
                 predicates.add(cb.equal(root.get("type"), type));
