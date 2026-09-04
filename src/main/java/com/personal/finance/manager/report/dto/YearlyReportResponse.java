@@ -6,6 +6,9 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.util.Map;
 
+/**
+ * Data Transfer Object for yearly financial summary report responses.
+ */
 @Data
 @Builder
 public class YearlyReportResponse {

@@ -116,7 +116,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"goalName\": \"Emergency Fund\",\n  \"description\": \"Save for rainy day\",\n  \"targetAmount\": 10000.00,\n  \"startDate\": \"2024-01-01\",\n  \"targetDate\": \"2024-12-31\"\n}"
+              "raw": "{\n  \"goalName\": \"Emergency Fund\",\n  \"targetAmount\": 10000.00,\n  \"startDate\": \"2024-01-01\",\n  \"targetDate\": \"2024-12-31\"\n}"
             },
             "url": { "raw": "{{base_url}}/api/goals", "host": ["{{base_url}}"], "path": ["api", "goals"] }
           }

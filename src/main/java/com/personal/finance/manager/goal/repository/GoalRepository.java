@@ -8,8 +8,19 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository interface for managing Goal database entities.
+ */
 @Repository
 public interface GoalRepository extends JpaRepository<Goal, Long> {
+
+    /**
+     * Finds all savings goals belonging to a specific user.
+     */
     List<Goal> findByUser(User user);
+
+    /**
+     * Finds a savings goal by ID owned by a specific user.
+     */
     Optional<Goal> findByIdAndUser(Long id, User user);
 }

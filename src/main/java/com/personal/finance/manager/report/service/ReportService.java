@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Service aggregating user transaction data for monthly and yearly financial reports.
+ */
 @Service
 @RequiredArgsConstructor
 public class ReportService {
@@ -23,6 +26,14 @@ public class ReportService {
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
 
+    /**
+     * Aggregates transactions for a specific month and year into a monthly financial summary.
+     *
+     * @param userId ID of the authenticated user
+     * @param year   target year
+     * @param month  target month (1-12)
+     * @return monthly report containing category breakdowns and net savings
+     */
     @Transactional(readOnly = true)
     public MonthlyReportResponse getMonthlyReport(Long userId, int year, int month) {
         User user = userRepository.findById(userId)
@@ -57,6 +68,13 @@ public class ReportService {
                 .build();
     }
 
+    /**
+     * Aggregates transactions for a specific year into a yearly financial summary.
+     *
+     * @param userId ID of the authenticated user
+     * @param year   target year
+     * @return yearly report containing category breakdowns and net savings
+     */
     @Transactional(readOnly = true)
     public YearlyReportResponse getYearlyReport(Long userId, int year) {
         User user = userRepository.findById(userId)

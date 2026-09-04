@@ -53,9 +53,9 @@ public class CategoryControllerTest {
 
         mockMvc.perform(get("/api/categories").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].name").value("Salary"))
-                .andExpect(jsonPath("$[1].type").value("EXPENSE"));
+                .andExpect(jsonPath("$.categories.length()").value(2))
+                .andExpect(jsonPath("$.categories[0].name").value("Salary"))
+                .andExpect(jsonPath("$.categories[1].type").value("EXPENSE"));
     }
 
     @Test

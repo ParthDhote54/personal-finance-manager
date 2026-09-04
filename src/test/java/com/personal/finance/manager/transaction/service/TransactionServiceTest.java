@@ -191,4 +191,20 @@ public class TransactionServiceTest {
 
         verify(transactionRepository, times(1)).delete(existingTransaction);
     }
+
+    @Test
+    public void testCreateTransactionInvalidCategoryThrowsIllegalArgumentException() {
+        User user = new User();
+        user.setId(1L);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(categoryRepository.findByNameAndUserIdOrUserIdNull("Unknown", 1L)).thenReturn(Optional.empty());
+
+        TransactionRequest request = new TransactionRequest();
+        request.setAmount(new BigDecimal("50.00"));
+        request.setDate(LocalDate.now());
+        request.setCategory("Unknown");
+
+        assertThrows(IllegalArgumentException.class, () -> transactionService.createTransaction(1L, request));
+    }
 }

@@ -9,6 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controller handling financial report generation.
+ * Provides endpoints for monthly and yearly financial summary reports.
+ */
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
@@ -16,6 +20,14 @@ public class ReportController {
 
     private final ReportService reportService;
 
+    /**
+     * Generates a monthly financial summary report for the authenticated user.
+     *
+     * @param year    report year
+     * @param month   report month (1-12)
+     * @param session authenticated HTTP session
+     * @return monthly report containing income/expense breakdowns and net savings
+     */
     @GetMapping("/monthly/{year}/{month}")
     public ResponseEntity<MonthlyReportResponse> getMonthlyReport(
             @PathVariable int year, 
@@ -29,6 +41,13 @@ public class ReportController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Generates a yearly financial summary report for the authenticated user.
+     *
+     * @param year    report year
+     * @param session authenticated HTTP session
+     * @return yearly report containing income/expense breakdowns and net savings
+     */
     @GetMapping("/yearly/{year}")
     public ResponseEntity<YearlyReportResponse> getYearlyReport(
             @PathVariable int year, 

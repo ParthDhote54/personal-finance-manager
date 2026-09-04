@@ -20,6 +20,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Service managing financial transactions operations, including creation, filtered search, update, and deletion.
+ */
 @Service
 @RequiredArgsConstructor
 public class TransactionService {
@@ -28,6 +31,13 @@ public class TransactionService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
 
+    /**
+     * Creates a new transaction for the specified user and derives transaction type from the category.
+     *
+     * @param userId  ID of the authenticated user
+     * @param request transaction creation request payload
+     * @return response object containing saved transaction details
+     */
     @Transactional
     public TransactionResponse createTransaction(Long userId, TransactionRequest request) {
         User user = userRepository.findById(userId)
@@ -50,6 +60,16 @@ public class TransactionService {
         return mapToResponse(transaction);
     }
 
+    /**
+     * Retrieves transactions belonging to the specified user matching filter criteria.
+     *
+     * @param userId     ID of the authenticated user
+     * @param startDate  optional minimum transaction date
+     * @param endDate    optional maximum transaction date
+     * @param categoryId optional category filter
+     * @param type       optional transaction type filter
+     * @return list of matching transactions
+     */
     @Transactional(readOnly = true)
     public List<TransactionResponse> getTransactions(Long userId, LocalDate startDate, LocalDate endDate, Long categoryId, TransactionType type) {
         User user = userRepository.findById(userId)
@@ -59,6 +79,14 @@ public class TransactionService {
         return transactions.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    /**
+     * Updates an existing transaction for the specified user. Date remains immutable.
+     *
+     * @param userId        ID of the authenticated user
+     * @param transactionId ID of the transaction to update
+     * @param request       transaction update payload
+     * @return updated transaction response
+     */
     @Transactional
     public TransactionResponse updateTransaction(Long userId, Long transactionId, TransactionRequest request) {
         User user = userRepository.findById(userId)
@@ -80,6 +108,12 @@ public class TransactionService {
         return mapToResponse(transactionRepository.save(transaction));
     }
 
+    /**
+     * Deletes a transaction owned by the specified user.
+     *
+     * @param userId        ID of the authenticated user
+     * @param transactionId ID of the transaction to delete
+     */
     @Transactional
     public void deleteTransaction(Long userId, Long transactionId) {
         User user = userRepository.findById(userId)
@@ -100,11 +134,11 @@ public class TransactionService {
         try {
             Long categoryId = Long.valueOf(categoryValue);
             return categoryRepository.findByIdAndUserIdOrUserIdNull(categoryId, userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Category not found or doesn't belong to user"));
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid category or category does not belong to user"));
         } catch (NumberFormatException e) {
             // Fall back to name-based lookup
             return categoryRepository.findByNameAndUserIdOrUserIdNull(categoryValue, userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Category not found or doesn't belong to user"));
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid category or category does not belong to user"));
         }
     }
 

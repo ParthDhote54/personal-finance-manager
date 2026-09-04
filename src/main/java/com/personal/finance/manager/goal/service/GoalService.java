@@ -18,6 +18,9 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Service managing financial savings goal creation, retrieval, updates, dynamic progress tracking, and deletion.
+ */
 @Service
 @RequiredArgsConstructor
 public class GoalService {
@@ -26,6 +29,13 @@ public class GoalService {
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
 
+    /**
+     * Creates a new savings goal for the specified user.
+     *
+     * @param userId  ID of the authenticated user
+     * @param request goal creation request payload
+     * @return created goal details with dynamic progress
+     */
     @Transactional
     public GoalResponse createGoal(Long userId, GoalRequest request) {
         User user = userRepository.findById(userId)
@@ -47,6 +57,12 @@ public class GoalService {
         return mapToResponse(goal, user);
     }
 
+    /**
+     * Retrieves all savings goals owned by the specified user with updated dynamic progress metrics.
+     *
+     * @param userId ID of the authenticated user
+     * @return list of goal responses
+     */
     @Transactional(readOnly = true)
     public List<GoalResponse> getGoals(Long userId) {
         User user = userRepository.findById(userId)
@@ -57,6 +73,13 @@ public class GoalService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Retrieves a specific savings goal owned by the specified user.
+     *
+     * @param userId ID of the authenticated user
+     * @param goalId ID of the goal to retrieve
+     * @return goal response object
+     */
     @Transactional(readOnly = true)
     public GoalResponse getGoal(Long userId, Long goalId) {
         User user = userRepository.findById(userId)
@@ -68,6 +91,14 @@ public class GoalService {
         return mapToResponse(goal, user);
     }
 
+    /**
+     * Updates target amount and target date for an existing savings goal owned by the user.
+     *
+     * @param userId  ID of the authenticated user
+     * @param goalId  ID of the goal to update
+     * @param request update payload containing new target amount/date
+     * @return updated goal response
+     */
     @Transactional
     public GoalResponse updateGoal(Long userId, Long goalId, GoalRequest request) {
         User user = userRepository.findById(userId)
@@ -82,6 +113,12 @@ public class GoalService {
         return mapToResponse(goalRepository.save(goal), user);
     }
 
+    /**
+     * Deletes a savings goal owned by the specified user.
+     *
+     * @param userId ID of the authenticated user
+     * @param goalId ID of the goal to delete
+     */
     @Transactional
     public void deleteGoal(Long userId, Long goalId) {
         User user = userRepository.findById(userId)

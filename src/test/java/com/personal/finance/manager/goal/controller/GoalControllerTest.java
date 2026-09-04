@@ -98,7 +98,7 @@ public class GoalControllerTest {
 
         mockMvc.perform(get("/api/goals").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.goals.length()").value(0));
     }
 
     @Test
@@ -132,6 +132,7 @@ public class GoalControllerTest {
         session.setAttribute("USER_ID", 1L);
 
         mockMvc.perform(delete("/api/goals/1").session(session))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Goal deleted successfully"));
     }
 }

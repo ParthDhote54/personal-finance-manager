@@ -19,6 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Service managing global default and custom user financial categories.
+ */
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
@@ -27,6 +30,13 @@ public class CategoryService {
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
 
+    /**
+     * Creates a new custom category for the specified user.
+     *
+     * @param userId  ID of the authenticated user
+     * @param request category creation payload
+     * @return created category response
+     */
     @Transactional
     public CategoryResponse createCategory(Long userId, CategoryRequest request) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -48,6 +58,12 @@ public class CategoryService {
         return mapToResponse(category);
     }
 
+    /**
+     * Retrieves all categories accessible to the user (global default + user custom).
+     *
+     * @param userId ID of the authenticated user
+     * @return list of category responses
+     */
     @Transactional(readOnly = true)
     public List<CategoryResponse> getUserCategories(Long userId) {
         List<Category> defaults = categoryRepository.findByUserIdIsNull();
@@ -57,6 +73,12 @@ public class CategoryService {
         return defaults.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    /**
+     * Deletes a custom category by category ID. Default or in-use categories cannot be deleted.
+     *
+     * @param userId     ID of the authenticated user
+     * @param categoryId ID of the category to delete
+     */
     @Transactional
     public void deleteCategory(Long userId, Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
@@ -77,6 +99,12 @@ public class CategoryService {
         categoryRepository.delete(category);
     }
 
+    /**
+     * Deletes a custom category by category name. Default or in-use categories cannot be deleted.
+     *
+     * @param userId       ID of the authenticated user
+     * @param categoryName name of the custom category to delete
+     */
     @Transactional
     public void deleteCategoryByName(Long userId, String categoryName) {
         // First check if it's a default category
@@ -95,6 +123,14 @@ public class CategoryService {
         categoryRepository.delete(category);
     }
 
+    /**
+     * Updates an existing custom category owned by the specified user.
+     *
+     * @param categoryId ID of the category to update
+     * @param userId     ID of the authenticated user
+     * @param request    category update payload
+     * @return updated category response
+     */
     @Transactional
     public CategoryResponse updateCategory(Long categoryId, Long userId, CategoryRequest request) {
         Category category = categoryRepository.findById(categoryId)

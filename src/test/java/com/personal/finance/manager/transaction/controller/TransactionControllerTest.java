@@ -112,7 +112,7 @@ public class TransactionControllerTest {
                 .param("endDate", "2024-01-31")
                 .param("categoryId", "2"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.transactions.length()").value(0));
     }
 
     @Test
@@ -136,11 +136,32 @@ public class TransactionControllerTest {
     }
 
     @Test
+    public void testCreateTransactionInvalidCategory() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("USER_ID", 1L);
+
+        TransactionRequest request = new TransactionRequest();
+        request.setAmount(new BigDecimal("100.00"));
+        request.setDate(LocalDate.now());
+        request.setCategory("NonExistentCategory");
+
+        when(transactionService.createTransaction(eq(1L), any(TransactionRequest.class)))
+                .thenThrow(new IllegalArgumentException("Invalid category or category does not belong to user"));
+
+        mockMvc.perform(post("/api/transactions")
+                .session(session)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     public void testDeleteTransactionSuccess() throws Exception {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("USER_ID", 1L);
 
         mockMvc.perform(delete("/api/transactions/1").session(session))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Transaction deleted successfully"));
     }
 }

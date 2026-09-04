@@ -48,15 +48,15 @@ Security is a foundational pillar of this API:
 | **GET** | `/api/transactions` | Retrieve user transactions (supports filtering) |
 | **POST** | `/api/goals` | Create a new financial savings goal |
 | **GET** | `/api/goals` | Retrieve all savings goals and progress |
-| **GET** | `/api/reports/summary?month={month}&year={year}` | Generate a monthly financial summary |
+| **GET** | `/api/reports/monthly/{year}/{month}` | Generate a monthly financial summary |
 | **GET** | `/api/reports/yearly/{year}` | Generate a yearly financial summary |
 
 ## Dockerization
 The project includes an optimized, **multi-stage Docker build**. The process isolates the heavy Maven build environment (used for resolving dependencies and compiling the JAR) from the runtime environment. The final runtime container uses a highly lightweight Alpine JRE image, drastically minimizing the final footprint and enhancing deployment speeds and security.
 
 ## Default Categories
-To immediately provide value without requiring configuration, the system automatically seeds 8 global default categories:
-* **Income:** Salary, Freelance, Investment, Other Income
-* **Expense:** Food, Transport, Shopping, Bills
+To immediately provide value without requiring configuration, the system automatically seeds 7 global default categories:
+* **Income:** Salary
+* **Expense:** Food, Rent, Transportation, Entertainment, Healthcare, Utilities
 
 Using specifically crafted JPQL queries, these global default categories seamlessly coexist with user-specific custom categories, ensuring users have access to both defaults and their own personalized budget classifications simultaneously.

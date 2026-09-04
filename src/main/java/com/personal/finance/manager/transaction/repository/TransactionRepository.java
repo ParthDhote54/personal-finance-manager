@@ -12,13 +12,26 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository interface for managing Transaction database entities.
+ * Provides custom JPQL queries for filtering, net savings calculations, and monthly/yearly aggregations.
+ */
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
+
+    /**
+     * Finds a transaction by ID owned by a specific user.
+     */
     Optional<Transaction> findByIdAndUser(Long id, User user);
-    
+
+    /**
+     * Checks if any transaction exists associated with a category ID.
+     */
     boolean existsByCategoryId(Long categoryId);
-    
-    // Using JPQL to handle dynamic filtering dates manually or via Specifications
+
+    /**
+     * Finds transactions belonging to a user matching optional filters (date range, category, type) ordered by date descending.
+     */
     @Query("SELECT t FROM Transaction t WHERE t.user = :user AND " +
            "(:startDate IS NULL OR t.date >= :startDate) AND " +
            "(:endDate IS NULL OR t.date <= :endDate) AND " +
@@ -32,6 +45,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
             @Param("categoryId") Long categoryId,
             @Param("type") com.personal.finance.manager.transaction.entity.TransactionType type);
 
+    /**
+     * Sums net transaction amount (Income - Expense) for a user between start and end dates.
+     */
     @Query("SELECT COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE -t.amount END), 0) " +
            "FROM Transaction t WHERE t.user = :user AND t.date >= :startDate AND t.date <= :endDate")
     java.math.BigDecimal sumNetTransactionsBetweenDates(
@@ -39,6 +55,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
 
+    /**
+     * Aggregates monthly transaction totals grouped by category name and transaction type.
+     */
     @Query("SELECT t.category.name, t.type, SUM(t.amount) " +
            "FROM Transaction t " +
            "WHERE t.user = :user AND YEAR(t.date) = :year AND MONTH(t.date) = :month " +
@@ -48,6 +67,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
             @Param("year") int year, 
             @Param("month") int month);
 
+    /**
+     * Aggregates yearly transaction totals grouped by category name and transaction type.
+     */
     @Query("SELECT t.category.name, t.type, SUM(t.amount) " +
            "FROM Transaction t " +
            "WHERE t.user = :user AND YEAR(t.date) = :year " +
